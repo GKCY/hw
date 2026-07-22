@@ -2076,7 +2076,11 @@ def _validate_gold_evidence(
                 "timing": f"timing={target['timing']}",
                 "slack_ns": f"slack={_format_number_for_prompt(target['slack_ns'])}",
                 "endpoint": f"endpoint={target['endpoint']}",
-                "beginpoint": f"beginpoint={target['beginpoint']}",
+                # diagnostic_context.v1 stores Innovus ``launching_point``
+                # under the legacy key ``beginpoint``.  The public prompt
+                # must identify the value as a launch clock pin (CK), not as
+                # the report_timing data beginpoint (Q).
+                "launch_clock_pin": f"launch_clock_pin={target['beginpoint']}",
                 "net": f"net={target['net']}",
                 "driver_pin": f"driver_pin={target['driver_pin']}",
                 "driver_inst": f"driver_inst={target['driver_inst']}",

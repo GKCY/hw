@@ -40,7 +40,7 @@
 
 ```text
 请在 NV_NVDLA_CMAC_CORE_mac 的已布线 post-route 数据库上完成 HOLD_002 timing ECO；当前 hold 方向存在负裕量。真实 Innovus MMMC 报告显示：setup 视图 functional_setup_ss 的 WNS/TNS 为 +0.051 ns/+0.000 ns，最差路径为 u_exp/cfg_is_fp16_d1_reg_0_/Q -> u_exp/exp_sft_56_reg_2_/D；hold 视图 functional_hold_ff 的 WNS/TNS 为 -0.065 ns/-0.065 ns，最差路径为 pp_nan_pvld_d2_reg_0_/Q -> mac_out_nan_reg/D。ECO 前 DRV 计数为 max_transition=0、max_capacitance=0、max_fanout=431，DRC=6957，connectivity=0。允许修改的 ECO cell 上限为 4；若新增 ECO 实例，必须采用确定性命名 SFT_ECO_HOLD_002_<SETUP|HOLD>_<ordinal>，其中 role 必须匹配修复方向，ordinal 从 1 连续递增且不得复用；以下是从同一 post-route DB 解析并经双重放一致性校验的全部目标证据：
-目标 1: role=hold_primary; timing=early; slack=-0.065 ns; beginpoint=pp_nan_pvld_d2_reg_0_/CK; endpoint=mac_out_nan_reg/D; net=FE_OFN16864_pp_nan_pvld_d2_0; driver_pin=FE_OFC8281_pp_nan_pvld_d2_0/Y; driver_inst=FE_OFC8281_pp_nan_pvld_d2_0; driver_ref=BUF_X1B_A9TR40; local_cells=[FE_OFC8281_pp_nan_pvld_d2_0(ref=BUF_X1B_A9TR40)]
+目标 1: role=hold_primary; timing=early; slack=-0.065 ns; launch_clock_pin=pp_nan_pvld_d2_reg_0_/CK; endpoint=mac_out_nan_reg/D; net=FE_OFN16864_pp_nan_pvld_d2_0; driver_pin=FE_OFC8281_pp_nan_pvld_d2_0/Y; driver_inst=FE_OFC8281_pp_nan_pvld_d2_0; driver_ref=BUF_X1B_A9TR40; local_cells=[FE_OFC8281_pp_nan_pvld_d2_0(ref=BUF_X1B_A9TR40)]
 请给出针对这些真实对象的最小化 Innovus Tcl，不得修改 SDC、放松时钟/I/O 约束或添加 false path、multicycle path、disable timing；修复 Tcl 只需完成 ECO、增量摆放与 ECO 布线，独立 replay harness 将在执行后复查 setup、hold、DRV、DRC 和 connectivity，并要求两个时序方向 WNS 均至少为 +0.010 ns。
 ```
 

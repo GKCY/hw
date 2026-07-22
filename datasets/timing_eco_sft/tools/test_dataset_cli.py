@@ -571,7 +571,7 @@ class DatasetCliTest(unittest.TestCase):
             target_lines.append(
                 f"role={target['role']}; timing={target['timing']}; "
                 f"slack={target['slack_ns']:+.3f} ns; endpoint={target['endpoint']}; "
-                f"beginpoint={target['beginpoint']}; net={target['net']}; "
+                f"launch_clock_pin={target['beginpoint']}; net={target['net']}; "
                 f"driver_pin={target['driver_pin']}; driver_inst={target['driver_inst']}; "
                 f"driver_ref={target['driver_ref']}; "
                 "local_cells=["

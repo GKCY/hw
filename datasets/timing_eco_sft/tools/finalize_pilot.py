@@ -3113,10 +3113,15 @@ def _build_instruction(manifest: Mapping[str, Any], replay: Mapping[str, Any]) -
         local_cells = ",".join(
             f"{cell['inst']}(ref={cell['ref']})" for cell in target["local_cells"]
         )
+        # diagnostic_context.v1 calls this field ``beginpoint``, but the
+        # Innovus collection value is ``launching_point``: the launch flop's
+        # clock pin (CK), not the report_timing data beginpoint (Q).  Keep the
+        # evidence schema stable while giving the public SFT prompt the
+        # semantically correct name.
         target_lines.append(
             f"目标 {index}: role={target['role']}; timing={target['timing']}; "
             f"slack={_format_slack(float(target['slack_ns']))}; "
-            f"beginpoint={target['beginpoint']}; endpoint={target['endpoint']}; "
+            f"launch_clock_pin={target['beginpoint']}; endpoint={target['endpoint']}; "
             f"net={target['net']}; driver_pin={target['driver_pin']}; "
             f"driver_inst={target['driver_inst']}; driver_ref={target['driver_ref']}; "
             f"local_cells=[{local_cells}]"
