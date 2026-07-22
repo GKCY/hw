@@ -1,0 +1,213 @@
+{
+  "schema_version": "timing_eco_pilot_catalog.v1",
+  "dataset": "timing_eco_sft/pilot_10",
+  "design": {
+    "top": "NV_NVDLA_CMAC_CORE_mac",
+    "expected_tool_version": "Innovus 21.10-p004_1",
+    "baseline_contract": {
+      "required_files": [
+        "base.enc",
+        "base.enc.dat",
+        "manifest.tcl",
+        "restore.tcl",
+        "setup.tcl",
+        "cds.lib",
+        "qualification.json",
+        "QUALIFIED_CANDIDATE"
+      ],
+      "tcl_globals": {
+        "top": "::SFT_BASE_TOP",
+        "setup_view": "::SFT_SETUP_VIEW",
+        "hold_view": "::SFT_HOLD_VIEW",
+        "checkpoint": "::SFT_BASE_CHECKPOINT"
+      }
+    },
+    "hierarchy_classes": {
+      "exp": {
+        "include_globs": ["*/u_exp/*", "u_exp/*"],
+        "exclude_globs": []
+      },
+      "multiplier": {
+        "include_globs": ["*/u_mul_*/*", "u_mul_*/*"],
+        "exclude_globs": []
+      },
+      "pipeline": {
+        "include_globs": ["*pp_out*", "*dat_out*"],
+        "exclude_globs": []
+      },
+      "top_tree": {
+        "include_globs": ["*"],
+        "exclude_globs": ["*/u_exp/*", "u_exp/*", "*/u_mul_*/*", "u_mul_*/*"]
+      }
+    },
+    "cell_policy": {
+      "delay_candidates": [
+        "DLY4_X4M_A9TR40",
+        "DLY2_X4M_A9TR40",
+        "DLY2_X2M_A9TR40",
+        "DLY2_X1M_A9TR40",
+        "DLY4_X2M_A9TR40",
+        "DLY4_X1M_A9TR40",
+        "DLY4_X0P5M_A9TR40"
+      ],
+      "buffer_candidates": [
+        "BUF_X0P7M_A9TR40",
+        "BUF_X1M_A9TR40"
+      ],
+      "clock_delay_discovery_globs": [
+        "DLYCLK*_A9TR40",
+        "CLKBUF*_A9TR40",
+        "CKBUF*_A9TR40"
+      ],
+      "eco_instance_prefix": "SFT_ECO_"
+    },
+    "acceptance": {
+      "baseline_wns_min_ns": 0.02,
+      "injected_opposite_wns_min_ns": 0.01,
+      "final_setup_wns_min_ns": 0.01,
+      "final_hold_wns_min_ns": 0.01,
+      "final_tns_ns": 0.0,
+      "max_setup_wns_regression_ns": 0.01,
+      "drv_must_not_regress": true,
+      "drc_must_not_regress": true,
+      "connectivity_violations": 0,
+      "replay_runs": 2
+    }
+  },
+  "case_order": [
+    "SETUP_001",
+    "SETUP_002",
+    "SETUP_003",
+    "SETUP_004",
+    "HOLD_001",
+    "HOLD_002",
+    "HOLD_003",
+    "HOLD_004",
+    "MIXED_001",
+    "MIXED_002"
+  ],
+  "cases": [
+    {
+      "id": "SETUP_001",
+      "type": "setup",
+      "difficulty": "easy",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"setup": [-0.05, -0.02]},
+      "selectors": [
+        {"role": "setup_primary", "timing": "late", "hierarchy_class": "exp", "stable_rank": 0, "count": 1}
+      ],
+      "injection": {"strategy": "insert_data_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {"delay_cells": 1, "delay_cell_reference": "DLY2_X4M_A9TR40"}, "hold_parameters": {}},
+      "repair": {"strategy": "replace_delay_and_upsize", "max_eco_cells": 2}
+    },
+    {
+      "id": "SETUP_002",
+      "type": "setup",
+      "difficulty": "medium",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"setup": [-0.12, -0.06]},
+      "selectors": [
+        {"role": "setup_primary", "timing": "late", "hierarchy_class": "exp", "stable_rank": 15, "count": 2}
+      ],
+      "injection": {"strategy": "insert_data_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {"delay_cells": 2, "delay_cell_reference": "DLY2_X4M_A9TR40"}, "hold_parameters": {}},
+      "repair": {"strategy": "replace_delay_and_upsize", "max_eco_cells": 6}
+    },
+    {
+      "id": "SETUP_003",
+      "type": "setup",
+      "difficulty": "hard",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"setup": [-0.25, -0.15]},
+      "selectors": [
+        {"role": "setup_primary", "timing": "late", "hierarchy_class": "top_tree", "stable_rank": 2, "count": 2}
+      ],
+      "injection": {"strategy": "insert_data_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {"delay_cells": 2, "delay_cell_reference": "DLY4_X2M_A9TR40"}, "hold_parameters": {}},
+      "repair": {"strategy": "replace_delay_and_upsize", "max_eco_cells": 6}
+    },
+    {
+      "id": "SETUP_004",
+      "type": "setup",
+      "difficulty": "medium",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"setup": [-0.12, -0.06]},
+      "selectors": [
+        {"role": "setup_cluster", "timing": "late", "hierarchy_class": "top_tree", "stable_rank": 10, "count": 4}
+      ],
+      "injection": {"strategy": "insert_data_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {"delay_cells": 2, "delay_cell_reference": "DLY4_X4M_A9TR40"}, "hold_parameters": {}},
+      "repair": {"strategy": "replace_delay_and_upsize", "max_eco_cells": 12}
+    },
+    {
+      "id": "HOLD_001",
+      "type": "hold",
+      "difficulty": "easy",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"hold": [-0.04, -0.02]},
+      "selectors": [
+        {"role": "hold_primary", "timing": "early", "hierarchy_class": "top_tree", "stable_rank": 51, "count": 1}
+      ],
+      "injection": {"strategy": "local_capture_clock_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {}, "hold_parameters": {"clock_cell_count": 1, "clock_cell_reference": "DLYCLK8S8_X1B_A9TR40"}},
+      "repair": {"strategy": "insert_data_delay", "max_eco_cells": 1, "delay_cell_reference": "DLY4_X0P5M_A9TR40", "delay_cells_per_endpoint": 1}
+    },
+    {
+      "id": "HOLD_002",
+      "type": "hold",
+      "difficulty": "medium",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"hold": [-0.07, -0.04]},
+      "selectors": [
+        {"role": "hold_primary", "timing": "early", "hierarchy_class": "top_tree", "stable_rank": 487, "count": 1}
+      ],
+      "injection": {"strategy": "local_capture_clock_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {}, "hold_parameters": {"clock_cell_count": 2, "clock_cell_reference": "DLYCLK8S6_X1B_A9TR40"}},
+      "repair": {"strategy": "insert_delay_and_downsize", "max_eco_cells": 4, "delay_cell_reference": "DLY4_X0P5M_A9TR40", "delay_cells_per_endpoint": 1}
+    },
+    {
+      "id": "HOLD_003",
+      "type": "hold",
+      "difficulty": "hard",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"hold": [-0.12, -0.08]},
+      "selectors": [
+        {"role": "hold_primary", "timing": "early", "hierarchy_class": "top_tree", "stable_rank": 142, "count": 1}
+      ],
+      "injection": {"strategy": "local_capture_clock_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {}, "hold_parameters": {"clock_cell_count": 2, "clock_cell_reference": "DLYCLK8S8_X1B_A9TR40"}},
+      "repair": {"strategy": "insert_data_delay", "max_eco_cells": 2, "delay_cell_reference": "DLY4_X0P5M_A9TR40", "delay_cells_per_endpoint": 2}
+    },
+    {
+      "id": "HOLD_004",
+      "type": "hold",
+      "difficulty": "medium",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"hold": [-0.08, -0.05]},
+      "selectors": [
+        {"role": "hold_cluster", "timing": "early", "hierarchy_class": "top_tree", "stable_rank": 233, "count": 1}
+      ],
+      "injection": {"strategy": "local_capture_clock_delay", "calibration_status": "FROZEN", "opposite_wns_min_ns": 0.01, "setup_parameters": {}, "hold_parameters": {"clock_cell_count": 2, "clock_cell_reference": "DLYCLK8S6_X1B_A9TR40"}},
+      "repair": {"strategy": "insert_data_delay", "max_eco_cells": 2, "delay_cell_reference": "DLY4_X0P5M_A9TR40", "delay_cells_per_endpoint": 2}
+    },
+    {
+      "id": "MIXED_001",
+      "type": "mixed",
+      "difficulty": "medium",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"setup": [-0.16, -0.12], "hold": [-0.07, -0.04]},
+      "selectors": [
+        {"role": "setup_primary", "timing": "late", "hierarchy_class": "exp", "stable_rank": 17, "count": 2},
+        {"role": "hold_primary", "timing": "early", "hierarchy_class": "top_tree", "stable_rank": 319, "count": 1}
+      ],
+      "injection": {"strategy": "mixed_data_delay_and_capture_skew", "calibration_status": "FROZEN", "setup_parameters": {"delay_cells": 2, "delay_cell_reference": "DLY2_X4M_A9TR40"}, "hold_parameters": {"clock_cell_count": 2, "clock_cell_reference": "DLYCLK8S6_X1B_A9TR40"}},
+      "repair": {"strategy": "coordinated_setup_hold", "max_eco_cells": 6, "delay_cell_reference": "DLY4_X0P5M_A9TR40", "delay_cells_per_endpoint": 1}
+    },
+    {
+      "id": "MIXED_002",
+      "type": "mixed",
+      "difficulty": "hard",
+      "repair_mode": "surgical",
+      "target_wns_ns": {"setup": [-0.42, -0.34], "hold": [-0.12, -0.08]},
+      "selectors": [
+        {"role": "setup_primary", "timing": "late", "hierarchy_class": "top_tree", "stable_rank": 4, "count": 3},
+        {"role": "hold_primary", "timing": "early", "hierarchy_class": "top_tree", "stable_rank": 400, "count": 1}
+      ],
+      "injection": {"strategy": "mixed_data_delay_and_capture_skew", "calibration_status": "FROZEN", "setup_parameters": {"delay_cells": 3, "delay_cell_reference": "DLY4_X4M_A9TR40"}, "hold_parameters": {"clock_cell_count": 2, "clock_cell_reference": "DLYCLK8S8_X1B_A9TR40"}},
+      "repair": {"strategy": "coordinated_setup_hold", "max_eco_cells": 11, "delay_cell_reference": "DLY4_X0P5M_A9TR40", "delay_cells_per_endpoint": 2}
+    }
+  ]
+}

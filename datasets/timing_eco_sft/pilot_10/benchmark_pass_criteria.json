@@ -1,0 +1,152 @@
+{
+  "schema_version": "timing_eco_benchmark_acceptance.v1",
+  "criteria_id": "pilot10_official_v1",
+  "decision_rule": "all_required_hard_gates_must_pass",
+  "candidate_equivalence": "outcome_based_not_gold_tcl_match",
+  "numeric_epsilon_ns": 1e-12,
+  "trust_model": {
+    "candidate_supplies_only": "fix.tcl",
+    "trusted_harness_controls": [
+      "violating checkpoint restore",
+      "Tcl policy validation",
+      "Innovus execution",
+      "report generation and parsing",
+      "artifact manifest and hashes",
+      "replay comparison",
+      "PrimeTime execution"
+    ],
+    "candidate_must_not_write_or_edit_evidence": true,
+    "locally_edited_metrics_are_not_valid_evidence": true
+  },
+  "profiles": {
+    "rl_fast": {
+      "decision_label": "RL_FEASIBLE",
+      "required_innovus_replays": 1,
+      "require_replay_determinism": false,
+      "require_primetime": false,
+      "official_benchmark_pass": false
+    },
+    "official": {
+      "decision_label": "BENCHMARK_PASS",
+      "required_innovus_replays": 2,
+      "require_replay_determinism": true,
+      "require_primetime": true,
+      "official_benchmark_pass": true
+    }
+  },
+  "start_state": {
+    "must_match_reference_case": true,
+    "timing_tolerance_ns": 0.001,
+    "drv_counts_must_match_exactly": true,
+    "drc_total_and_categories_must_match_exactly": true,
+    "connectivity_count_must_match_exactly": true,
+    "diagnostic_context_must_match_exactly": true,
+    "constraint_snapshots_must_match_reference": true
+  },
+  "candidate_policy": {
+    "repair_mode": "surgical",
+    "allowed_commands": [
+      "setEcoMode",
+      "setNanoRouteMode",
+      "ecoChangeCell",
+      "ecoAddRepeater",
+      "refinePlace",
+      "ecoRoute"
+    ],
+    "forbid_tcl_substitution_and_multi_command_lines": true,
+    "max_eco_cells_source": "reference manifest max_eco_cells",
+    "changed_instances_must_be_in_diagnostic_local_cells": true,
+    "repeater_terms_must_be_diagnostic_endpoints": true,
+    "new_instance_name_pattern": "SFT_ECO_<CASE_ID>_<SETUP|HOLD>_<ordinal>",
+    "new_instance_ordinals_start_at_one_and_are_contiguous": true,
+    "require_one_incremental_place": true,
+    "require_one_target_eco_route": true,
+    "forbidden_effects": [
+      "constraint changes",
+      "clock or I/O relaxation",
+      "false path, multicycle path, or disable timing",
+      "analysis-view changes",
+      "runtime helper sourcing",
+      "shell, file, process, or report manipulation"
+    ]
+  },
+  "innovus_timing": {
+    "setup": {
+      "wns_min_ns": 0.01,
+      "tns_abs_max_ns": 1e-12
+    },
+    "hold": {
+      "wns_min_ns": 0.01,
+      "tns_abs_max_ns": 1e-12
+    }
+  },
+  "physical_integrity": {
+    "drv_after_must_not_exceed_before_for": [
+      "max_transition_violations",
+      "max_capacitance_violations",
+      "max_fanout_violations"
+    ],
+    "drc_total_after_must_not_exceed_before": true,
+    "every_drc_category_after_must_not_exceed_before": true,
+    "missing_drc_category_count": 0,
+    "connectivity_after_violations": 0
+  },
+  "logical_and_constraint_integrity": {
+    "setup_constraint_before_after_bytes_identical": true,
+    "hold_constraint_before_after_bytes_identical": true,
+    "required_functional_audit_checks": [
+      "fixed_netlist_written",
+      "constraints_unchanged",
+      "no_illegal_eco",
+      "liberty_function_preserved",
+      "connectivity_clean",
+      "physical_no_regression",
+      "violation_locality_complete",
+      "check_design_completed",
+      "cell_budget_respected",
+      "violating_design_preserved",
+      "matching_corner_spef_written"
+    ],
+    "check_design_zero_count_labels": [
+      "Cells with missing LEF",
+      "Cells with missing Timing data",
+      "Nets with multiple drivers",
+      "Verilog nets with multiple drivers",
+      "Unplaced I/O Pads"
+    ]
+  },
+  "replay_determinism": {
+    "timing_tolerance_ns": 0.001,
+    "require_same_semantic_evidence_hash": true,
+    "require_same_functional_audit_hash": true,
+    "require_same_injection_provenance_hash": true,
+    "require_same_success_marker_hash": true
+  },
+  "independent_primetime": {
+    "required_tool_version": "R-2020.09-SP4",
+    "setup_delay_type": "max",
+    "hold_delay_type": "min",
+    "wns_min_ns": 0.01,
+    "tns_abs_max_ns": 1e-12,
+    "violating_paths": 0,
+    "parasitics_read": true,
+    "propagated_clocks": true
+  },
+  "evidence_integrity": {
+    "manifest_sha256_and_size_required": true,
+    "success_marker_required": true,
+    "all_consumed_artifacts_must_be_case_relative": true,
+    "check_design_tree_must_be_nonempty_and_hash_bound": true
+  },
+  "result": {
+    "pass_reward": 1.0,
+    "fail_reward": 0.0,
+    "cli_exit_code_pass": 0,
+    "cli_exit_code_hard_gate_fail": 1,
+    "cli_exit_code_malformed_or_untrusted_bundle": 2
+  },
+  "classification": {
+    "technology": "derived_non_signoff",
+    "foundry_signoff_claim_allowed": false
+  }
+}
