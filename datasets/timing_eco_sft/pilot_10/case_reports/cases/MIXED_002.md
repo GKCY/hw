@@ -155,20 +155,20 @@ PrimeTime `R-2020.09-SP4` 使用 post-ECO gate netlist、对应 corner SPEF 和�
 
 ## 7. 证据入口
 
-- [instruction.txt](../cases/MIXED_002/instruction.txt)
-- [inject.tcl](../cases/MIXED_002/inject.tcl)
-- [fix.tcl](../cases/MIXED_002/fix.tcl)
-- [metrics.json](../cases/MIXED_002/metrics.json)
-- [injection_provenance.json](../cases/MIXED_002/reports/injection_provenance.json)
-- [resolved_targets.tcl](../cases/MIXED_002/reports/resolved_targets.tcl)
-- [primetime_crosscheck.json](../cases/MIXED_002/primetime_crosscheck.json)
-- [manifest.json](../cases/MIXED_002/manifest.json)
-- [Innovus log](../cases/MIXED_002/logs/innovus.log)
+- [instruction.txt](../../cases/MIXED_002/instruction.txt)
+- [inject.tcl](../../cases/MIXED_002/inject.tcl)
+- [fix.tcl](../../cases/MIXED_002/fix.tcl)
+- [metrics.json](../../cases/MIXED_002/metrics.json)
+- [injection_provenance.json](../../cases/MIXED_002/reports/injection_provenance.json)
+- [resolved_targets.tcl](../../cases/MIXED_002/reports/resolved_targets.tcl)
+- [primetime_crosscheck.json](../../cases/MIXED_002/primetime_crosscheck.json)
+- [manifest.json](../../cases/MIXED_002/manifest.json)
+- [Innovus log](../../cases/MIXED_002/logs/innovus.log)
 
 ## 8. RL / Benchmark 可验证 PASS
 
 本 case 的候选修复不需要复现 Gold Tcl；允许在 `11` 个 cell 预算内给出其他局部方案。
-官方判定必须使用 [共享 PASS 标准](../BENCHMARK_PASS_CRITERIA.md) 和 trusted harness，不能信任候选自行生成的 metrics。
+官方判定必须使用 [共享 PASS 标准](../../BENCHMARK_PASS_CRITERIA.md) 和 trusted harness，不能信任候选自行生成的 metrics。
 
 ```sh
 python3 tools/check_benchmark_pass.py \
