@@ -12,7 +12,7 @@ import stat
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from common import BatchError, sha256_file
+from common import BatchError, SAFE_OBJECT_RE, sha256_file
 
 
 NUMBER = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?"
@@ -63,6 +63,158 @@ def timing(path: Path) -> dict[str, Any]:
         "tns_ns": sum(negative.values()),
         "negative_endpoints": sorted(negative),
     }
+
+
+def observable_target_path_evidence(
+    path: Path, *, maximum_cells_per_path: int = 8
+) -> dict[str, Any]:
+    """Extract model-visible path points from an Innovus text report.
+
+    The source is the replay-before report from the violating checkpoint, not
+    the baseline probe or construction plan.  Only currently observable names,
+    refs and point delays are returned.
+    """
+
+    if (
+        not isinstance(maximum_cells_per_path, int)
+        or isinstance(maximum_cells_per_path, bool)
+        or maximum_cells_per_path < 1
+        or maximum_cells_per_path > 32
+    ):
+        raise BatchError("maximum observable path cells must be in [1, 32]")
+    text = _text(path)
+    if "Cadence Innovus 21.10-p004_1" not in text:
+        raise BatchError(f"{path}: wrong/missing Innovus report version")
+    design_match = re.search(r"(?m)^#\s*Design:\s*(\S+)\s*$", text)
+    if design_match is None:
+        raise BatchError(f"{path}: missing design identity")
+    starts = list(re.finditer(r"(?m)^Path\s+\d+:", text))
+    if not starts:
+        raise BatchError(f"{path}: contains no timing paths")
+
+    result: dict[str, dict[str, Any]] = {}
+    analysis_view: str | None = None
+    sequential_prefixes = ("DFF", "SDFF", "LATCH", "LAT", "TLAT", "ICG", "CKG")
+    for index, start in enumerate(starts):
+        end = starts[index + 1].start() if index + 1 < len(starts) else len(text)
+        block = text[start.start() : end]
+        endpoint_match = re.search(r"(?m)^Endpoint:\s+(\S+)", block)
+        beginpoint_match = re.search(r"(?m)^Beginpoint:\s+(\S+)", block)
+        view_match = re.search(r"(?m)^Analysis View:\s+(\S+)\s*$", block)
+        timing_match = re.search(
+            r"(?ms)^\s*Timing Path:\s*(.*?)(?=^\s*Other End Path:)", block
+        )
+        if None in (endpoint_match, beginpoint_match, view_match, timing_match):
+            raise BatchError(f"{path}: malformed observable timing path {index + 1}")
+        endpoint = endpoint_match.group(1)
+        beginpoint = beginpoint_match.group(1)
+        view = view_match.group(1)
+        if analysis_view is None:
+            analysis_view = view
+        elif view != analysis_view:
+            raise BatchError(f"{path}: target paths use multiple analysis views")
+        if endpoint in result:
+            raise BatchError(f"{path}: duplicate observable endpoint {endpoint}")
+
+        started_data = False
+        by_instance: dict[str, dict[str, Any]] = {}
+        for line in timing_match.group(1).splitlines():
+            if not line.lstrip().startswith("|"):
+                continue
+            fields = [field.strip() for field in line.strip().strip("|").split("|")]
+            if len(fields) != 7:
+                continue
+            pin, _edge, _net, reference, delay_text, _arrival, _required = fields
+            if pin == beginpoint:
+                started_data = True
+                continue
+            if not started_data:
+                continue
+            try:
+                delay = float(delay_text)
+            except ValueError:
+                continue
+            pin = re.sub(r"\s*->\s*$", "", pin)
+            if delay <= 0.0 or not reference or "/" not in pin:
+                continue
+            if reference.startswith(sequential_prefixes):
+                continue
+            instance = pin.rsplit("/", 1)[0]
+            if (
+                SAFE_OBJECT_RE.fullmatch(instance) is None
+                or SAFE_OBJECT_RE.fullmatch(pin) is None
+                or SAFE_OBJECT_RE.fullmatch(reference) is None
+            ):
+                raise BatchError(f"{path}: unsafe object in observable path table")
+            previous = by_instance.get(instance)
+            if previous is None or delay > previous["delay_ns"]:
+                by_instance[instance] = {
+                    "instance": instance,
+                    "pin": pin,
+                    "current_ref": reference,
+                    "delay_ns": delay,
+                }
+        cells = sorted(
+            by_instance.values(),
+            key=lambda row: (-row["delay_ns"], row["instance"], row["pin"]),
+        )[:maximum_cells_per_path]
+        if not cells:
+            raise BatchError(f"{path}: no observable data-path cells for {endpoint}")
+        result[endpoint] = {"beginpoint": beginpoint, "cells": cells}
+
+    return {
+        "design": design_match.group(1),
+        "analysis_view": analysis_view,
+        "paths": result,
+    }
+
+
+def compare_observable_path_evidence(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+    *,
+    tolerance_ns: float = 0.001,
+) -> None:
+    """Require two fresh replay reports to expose the same prompt evidence."""
+
+    if left.get("design") != right.get("design"):
+        raise BatchError("observable replay design identities differ")
+    if left.get("analysis_view") != right.get("analysis_view"):
+        raise BatchError("observable replay analysis views differ")
+    left_paths = left.get("paths")
+    right_paths = right.get("paths")
+    if not isinstance(left_paths, Mapping) or not isinstance(right_paths, Mapping):
+        raise BatchError("observable replay path evidence is malformed")
+    if set(left_paths) != set(right_paths):
+        raise BatchError("observable replay endpoint sets differ")
+    for endpoint in left_paths:
+        left_path = left_paths[endpoint]
+        right_path = right_paths[endpoint]
+        if not isinstance(left_path, Mapping) or not isinstance(right_path, Mapping):
+            raise BatchError(f"observable replay path is malformed for {endpoint}")
+        if left_path.get("beginpoint") != right_path.get("beginpoint"):
+            raise BatchError(f"observable replay beginpoints differ for {endpoint}")
+        left_cells = left_path.get("cells")
+        right_cells = right_path.get("cells")
+        if not isinstance(left_cells, list) or not isinstance(right_cells, list):
+            raise BatchError(f"observable replay cells are malformed for {endpoint}")
+        left_by_instance = {row["instance"]: row for row in left_cells}
+        right_by_instance = {row["instance"]: row for row in right_cells}
+        if set(left_by_instance) != set(right_by_instance):
+            raise BatchError(f"observable replay cell sets differ for {endpoint}")
+        for instance, left_cell in left_by_instance.items():
+            right_cell = right_by_instance[instance]
+            for key in ("pin", "current_ref"):
+                if left_cell.get(key) != right_cell.get(key):
+                    raise BatchError(
+                        f"observable replay {key} differs for {endpoint}/{instance}"
+                    )
+            if abs(float(left_cell["delay_ns"]) - float(right_cell["delay_ns"])) > (
+                tolerance_ns + 1e-12
+            ):
+                raise BatchError(
+                    f"observable replay delay differs for {endpoint}/{instance}"
+                )
 
 
 def drv(path: Path) -> dict[str, int]:

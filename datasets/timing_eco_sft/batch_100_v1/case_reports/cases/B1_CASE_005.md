@@ -39,7 +39,23 @@
 ## 3. SFT Instruction（原文）
 
 ```text
-案例 B1_CASE_005 的 violating checkpoint 在 pipeline 层级观察到 setup WNS=-0.136000 ns、TNS=-0.136000 ns。负裕量 endpoint 恰为：pp_out_l0n11_0_d1_reg_3_/D。目标 data path 的 cell/net delay (ns) 为：pp_out_l0n11_0_d1_reg_3_/D=7.538100/0.019100。DRV 计数：transition=2，capacitance=0，fanout=431。请给出严格 1 个不同实例的最小 RVT 组合逻辑 resize ECO，并在末尾仅执行 refinePlace -eco true；不得修改连接、约束、时钟或路由。
+请在随样本提供的 NV_NVDLA_CMAC_CORE_mac 已布线 post-route violating checkpoint 上完成 B1_CASE_005 setup timing ECO。
+当前 Innovus MMMC setup 视图 functional_setup_ss 的 WNS/TNS=-0.136000/-0.136000 ns；负裕量 endpoint 精确集合为：pp_out_l0n11_0_d1_reg_3_/D。
+当前 hold 仅作为观察证据记录，WNS/TNS=+0.050000/+0.000000 ns。
+当前完整物理检查计数：max_transition=2、max_capacitance=0、max_fanout=431、DRC=6958、connectivity=9。
+以下局部路径证据均直接取自该 violating checkpoint；每个列表按报告中的正 point delay 从大到小截取，这些条目仅为报告排序结果，不构成实例或目标 ref 推荐：
+目标 1: beginpoint=u_mul_46/cfg_is_int8_d1_reg/Q; endpoint=pp_out_l0n11_0_d1_reg_3_/D; slack=-0.135839 ns; data_cell_delay=7.538100 ns; data_net_delay=0.019100 ns。
+  1. inst=u_tree_l0n11/U705; pin=u_tree_l0n11/U705/Y; current_ref=XNOR2_X0P5M_A9TR40; reported_point_delay=1.527000 ns
+  2. inst=U22310; pin=U22310/Y; current_ref=AO1B2_X1M_A9TR40; reported_point_delay=0.375000 ns
+  3. inst=u_mul_46/U26; pin=u_mul_46/U26/Y; current_ref=INV_X4B_A9TR40; reported_point_delay=0.339000 ns
+  4. inst=u_mul_46/FE_OFC3476_cfg_is_int8_d1; pin=u_mul_46/FE_OFC3476_cfg_is_int8_d1/Y; current_ref=BUF_X3M_A9TR40; reported_point_delay=0.328000 ns
+  5. inst=u_mul_46/u_booth_4/U33; pin=u_mul_46/u_booth_4/U33/Y; current_ref=AND2_X1M_A9TR40; reported_point_delay=0.327000 ns
+  6. inst=u_mul_46/U444; pin=u_mul_46/U444/Y; current_ref=NAND4_X1A_A9TR40; reported_point_delay=0.285000 ns
+  7. inst=u_mul_46/u_tree_l0n1/U157; pin=u_mul_46/u_tree_l0n1/U157/Y; current_ref=XOR2_X0P7M_A9TR40; reported_point_delay=0.281000 ns
+  8. inst=u_tree_l0n11/U47; pin=u_tree_l0n11/U47/Y; current_ref=XNOR2_X1M_A9TR40; reported_point_delay=0.234000 ns
+请从上述可观察路径实例中选择恰好一个不同实例，每个实例只执行一次 ecoChangeCell，并仅替换为逻辑功能、pin signature 与 RVT 家族等价的 drive-strength ref；这里的最小化指修改实例数固定为题面预算，目标 ref 必须根据当前可观察证据与等价性、闭合要求选择。
+修复后必须满足：setup WNS>=0、TNS=0、无负裕量 endpoint；max_transition/max_capacitance/max_fanout、DRC 和 connectivity 均不得比当前计数增加；placement 必须合法，约束、时钟、实例集合、pin-net 拓扑和路由不得改变。
+输出一个 Tcl 代码块。除注释和空行外，命令顺序必须是：setEcoMode -batchMode true；规定数量的 ecoChangeCell -inst {...} -cell {...}；setEcoMode -batchMode false；最后且仅最后执行一次 refinePlace -eco true。
 ```
 
 ## 4. Probe / 注入 Tcl

@@ -16,6 +16,7 @@ from typing import Any, Mapping, Sequence
 
 import checkpoint_archive
 import evidence as raw_evidence
+import instruction as instruction_text
 from common import (
     BatchError,
     atomic_json,
@@ -40,12 +41,7 @@ SPECS_PATH = Path(os.environ.get("B100_SPECS_PATH", ROOT / "case_specs.json"))
 CHECKPOINT_SUFFIXES = (".enc", ".enc.dat")
 TRANSPORT_BUNDLE_SUFFIXES = (".tar", ".tgz", ".tar.gz")
 CASE_ARTIFACT_TREE_HASH_ALGORITHM = "sha256-case-artifact-tree-v2"
-SYSTEM_PROMPT = (
-    "你是一名资深 Cadence Innovus 21.10 物理设计工程师。请仅依据给出的"
-    " violating checkpoint 可观察证据诊断 setup 违例，并给出最小化、可重放的 "
-    "RVT 组合逻辑 resize ECO。只允许 ecoChangeCell 与 refinePlace -eco true；"
-    "不得修改约束、时钟、顺序单元、clock-gating、macro、连接或路由。"
-)
+SYSTEM_PROMPT = instruction_text.SYSTEM_PROMPT
 
 
 def _case_artifact_ledger(case_root: Path) -> list[dict[str, Any]]:
@@ -850,9 +846,9 @@ def validate_case(
     instruction = require_real_file(case_root / "instruction.txt", "instruction").read_text(
         encoding="utf-8"
     )
-    if re.search(r"(?i)\b(?:inject|injection|downsize oracle|hidden)\b", instruction):
-        raise BatchError(f"{case_id}: instruction leaks hidden injection details")
+    instruction_text.assert_oracle_safe(instruction)
     answer = require_real_file(case_root / "answer.txt", "answer").read_text(encoding="utf-8")
+    instruction_text.assert_oracle_safe(answer)
     fences = re.findall(r"```tcl\n(.*?)```", answer, re.DOTALL)
     if len(fences) != 1 or fences[0].encode() != fix_bytes:
         raise BatchError(f"{case_id}: answer Tcl is not byte-identical to fix.tcl")
@@ -992,6 +988,9 @@ def _conversation(
 ) -> dict[str, Any]:
     instruction = (case_root / "instruction.txt").read_text(encoding="utf-8").rstrip("\n")
     answer = (case_root / "answer.txt").read_text(encoding="utf-8").rstrip("\n")
+    instruction_text.assert_oracle_safe(SYSTEM_PROMPT)
+    instruction_text.assert_oracle_safe(instruction)
+    instruction_text.assert_oracle_safe(answer)
     return {
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -1000,8 +999,6 @@ def _conversation(
         ],
         "metadata": {
             "case_id": spec["id"],
-            "shape": spec["shape"],
-            "strategy": spec["strategy"],
             "difficulty": spec["difficulty"],
             "validation_class": "validated_innovus_dual_replay",
             "signoff_qualified": False,

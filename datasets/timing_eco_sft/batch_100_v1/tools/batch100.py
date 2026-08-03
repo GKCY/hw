@@ -37,6 +37,7 @@ import catalog
 import checkpoint_archive
 import evidence
 import finalize_batch
+import instruction as instruction_text
 import relaxed_v3
 from common import (
     BatchError,
@@ -84,6 +85,7 @@ TOOLS = {
     "runner": ROOT / "tools" / "batch100.py",
     "state_store": ROOT / "tools" / "state_store.py",
     "common": ROOT / "tools" / "common.py",
+    "instruction": ROOT / "tools" / "instruction.py",
     "checkpoint_archive": ROOT / "tools" / "checkpoint_archive.py",
     "probe": ROOT / "tools" / "probe.tcl",
     "calibrate": ROOT / "tools" / "calibrate.tcl",
@@ -4287,30 +4289,24 @@ def _execute_one(
     }
     atomic_json(case_root / "metrics.json", metrics)
     observable = first["before"]
-    instruction = (
-        f"案例 {case_id} 的 violating checkpoint 在 {spec['hierarchy']} 层级观察到 "
-        f"setup WNS={observable['setup_wns_ns']:.6f} ns、"
-        f"TNS={observable['setup_tns_ns']:.6f} ns。负裕量 endpoint 恰为："
-        + "、".join(binding["target_endpoints"])
-        + "。目标 data path 的 cell/net delay (ns) 为："
-        + "；".join(
-            f"{endpoint}={values['cell_delay_ns']:.6f}/{values['net_delay_ns']:.6f}"
-            for endpoint, values in observable["target_paths"].items()
+    path_evidence = [
+        evidence.observable_target_path_evidence(
+            reports / "target_setup_before.rpt"
         )
-        + f"。DRV 计数：transition={observable['drv']['max_transition']}，"
-        f"capacitance={observable['drv']['max_capacitance']}，"
-        f"fanout={observable['drv']['max_fanout']}。请给出严格 {spec['expected_modification_count']} "
-        "个不同实例的最小 RVT 组合逻辑 resize ECO，并在末尾仅执行 "
-        "refinePlace -eco true；不得修改连接、约束、时钟或路由。\n"
+        for _, reports, _, _, _ in replay_local
+    ]
+    evidence.compare_observable_path_evidence(
+        path_evidence[0], path_evidence[1]
+    )
+    instruction = instruction_text.render_instruction(
+        case_id=case_id,
+        expected_modification_count=spec["expected_modification_count"],
+        observable=observable,
+        path_evidence=path_evidence[0],
     )
     atomic_write(case_root / "instruction.txt", instruction.encode("utf-8"))
     fix_text = fix.read_text(encoding="utf-8")
-    answer = (
-        "采用下列冻结的等价 RVT resize；目标在 legalization 前已闭合，"
-        "随后仅做增量合法化。\n\n```tcl\n"
-        + fix_text
-        + "```\n"
-    )
+    answer = instruction_text.render_answer(fix_text)
     atomic_write(case_root / "answer.txt", answer.encode("utf-8"))
 
     acceptance = read_json(SPECS_PATH)["acceptance"]
